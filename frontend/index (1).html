@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud Resource Map</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f5f5f7;--surface:#ffffff;--surface-2:#f5f5f7;--surface-3:#e8e8ed;
+    --border:rgba(0,0,0,0.08);--border-strong:rgba(0,0,0,0.14);
+    --text:#1d1d1f;--text-2:#6e6e73;--text-3:#aeaeb2;
+    --blue:#0071e3;--blue-bg:#e8f1fb;--blue-light:rgba(0,113,227,0.08);
+    --green:#34c759;--green-bg:#eaf7ee;--amber:#ff9f0a;--amber-bg:#fff4e0;
+    --red:#ff3b30;--red-bg:#fff0ef;
+    --radius:12px;--radius-lg:18px;--radius-xl:24px;
+    --shadow:0 2px 12px rgba(0,0,0,0.07),0 1px 3px rgba(0,0,0,0.05);
+    --shadow-lg:0 8px 40px rgba(0,0,0,0.10),0 2px 8px rgba(0,0,0,0.06);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-font-smoothing:antialiased}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;font-size:15px;line-height:1.5;min-height:100vh}
+  nav{position:sticky;top:0;z-index:50;background:rgba(245,245,247,0.85);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--border)}
+  .nav-inner{max-width:1140px;margin:0 auto;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:9px}
+  .brand-icon{width:28px;height:28px;background:var(--blue);border-radius:7px;display:flex;align-items:center;justify-content:center}
+  .brand-icon svg{width:15px;height:15px}
+  .brand-name{font-size:15px;font-weight:600;letter-spacing:-0.3px}
+  .nav-right{display:flex;align-items:center;gap:8px}
+  .connected-pill{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:500;color:#1a7f37;background:var(--green-bg);border-radius:20px;padding:4px 10px}
+  .connected-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:breathe 2.4s ease-in-out infinite}
+  @keyframes breathe{0%,100%{opacity:1}50%{opacity:.4}}
+  .nav-btn{font-family:'Inter',sans-serif;font-size:13px;font-weight:500;padding:6px 14px;border-radius:980px;border:none;cursor:pointer;transition:all .15s}
+  .nav-btn-ghost{background:transparent;color:var(--text-2)}.nav-btn-ghost:hover{background:var(--surface-3);color:var(--text)}
+  .nav-btn-primary{background:var(--blue);color:#fff}.nav-btn-primary:hover{background:#0077ed}
+  .provider-bar{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:52px;z-index:40}
+  .provider-tabs{max-width:1140px;margin:0 auto;padding:0 24px;display:flex}
+  .provider-tab{display:flex;align-items:center;gap:8px;padding:13px 20px;font-size:13px;font-weight:500;color:var(--text-2);border:none;background:transparent;cursor:pointer;border-bottom:2.5px solid transparent;transition:all .15s;position:relative;top:1px}
+  .provider-tab:hover{color:var(--text)}
+  .provider-tab img{width:18px;height:18px;object-fit:contain}
+  .tab-aws.active{color:#ff9900;border-bottom-color:#ff9900}
+  .tab-azure.active{color:#0078d4;border-bottom-color:#0078d4}
+  .tab-gcp.active{color:#4285f4;border-bottom-color:#4285f4}
+  .page{max-width:1140px;margin:0 auto;padding:32px 24px 80px}
+  .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+  .card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:20px;position:relative;overflow:hidden;transition:box-shadow .2s}
+  .card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+  .card-blue::after{background:var(--blue)}.card-amber::after{background:var(--amber)}.card-red::after{background:var(--red)}.card-green::after{background:var(--green)}
+  .card:hover{box-shadow:var(--shadow-lg)}
+  .card-label{font-size:12px;font-weight:500;color:var(--text-3);margin-bottom:10px;margin-top:4px}
+  .card-value{font-size:30px;font-weight:600;letter-spacing:-1.2px;line-height:1;margin-bottom:4px}
+  .card-sub{font-size:12px;color:var(--text-3)}
+  .card-blue .card-value{color:var(--blue)}.card-amber .card-value{color:var(--amber)}.card-red .card-value{color:var(--red)}.card-green .card-value{color:var(--green)}
+  .controls{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .seg{display:flex;background:var(--surface);border-radius:980px;padding:3px;box-shadow:var(--shadow);gap:2px}
+  .seg-btn{font-family:'Inter',sans-serif;font-size:12px;font-weight:500;padding:5px 14px;border-radius:980px;border:none;background:transparent;color:var(--text-2);cursor:pointer;transition:all .15s}
+  .seg-btn:hover{color:var(--text)}.seg-btn.active{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.12),0 0 0 .5px rgba(0,0,0,.06)}
+  .search-wrap{flex:1;min-width:180px;position:relative}
+  .search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-3);display:flex}
+  .search{width:100%;font-family:'Inter',sans-serif;font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:980px;color:var(--text);padding:7px 14px 7px 32px;outline:none;box-shadow:var(--shadow);transition:border-color .15s,box-shadow .15s}
+  .search::placeholder{color:var(--text-3)}.search:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,113,227,.12)}
+  .region-select,.export-btn{font-family:'Inter',sans-serif;font-size:13px;font-weight:500;background:var(--surface);border:1px solid var(--border);border-radius:980px;color:var(--text-2);padding:7px 14px;outline:none;cursor:pointer;box-shadow:var(--shadow);transition:all .15s;appearance:none}
+  .export-btn{padding:7px 16px}.export-btn:hover{border-color:var(--border-strong);color:var(--text)}
+  .category-header{display:flex;align-items:center;gap:10px;padding:8px 20px;cursor:pointer;user-select:none;border-bottom:1px solid var(--border)}
+  .category-label{font-size:11px;font-weight:600;color:var(--text-3);letter-spacing:.5px;text-transform:uppercase}
+  .category-count{font-size:11px;font-weight:600;background:var(--surface-3);color:var(--text-3);border-radius:20px;padding:1px 8px}
+  .category-cost{font-size:12px;font-weight:600;color:var(--amber);margin-left:auto}
+  .category-cost.free-cat{color:var(--text-3);font-weight:400}
+  .category-toggle{color:var(--text-3);transition:transform .2s;display:flex;margin-left:4px}
+  .category-toggle.collapsed{transform:rotate(-90deg)}
+  .category-body{overflow:hidden;transition:max-height .25s ease}
+  .list-header{display:grid;grid-template-columns:52px 1fr 90px 140px 120px 120px 40px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--surface-2)}
+  .list-header span{font-size:11px;font-weight:500;color:var(--text-3);letter-spacing:.2px}
+  .service-row{display:grid;grid-template-columns:52px 1fr 90px 140px 120px 120px 40px;padding:12px 20px;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;transition:background .12s;animation:rowIn .25s ease both}
+  .service-row:last-child{border-bottom:none}.service-row:hover{background:var(--surface-2)}
+  @keyframes rowIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+  .svc-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+  .svc-icon img{width:26px;height:26px;object-fit:contain}
+  .row-name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:1px}
+  .row-desc{font-size:12px;color:var(--text-2)}
+  .cell{font-size:13px;color:var(--text-2)}
+  .count-chip{display:inline-flex;align-items:center;justify-content:center;background:var(--blue-bg);color:var(--blue);font-size:12px;font-weight:600;border-radius:6px;padding:2px 9px;min-width:28px}
+  .status-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:3px 9px;border-radius:6px}
+  .status-chip.running{background:var(--green-bg);color:#1a7f37}.status-chip.idle{background:var(--amber-bg);color:#b35900}
+  .status-chip.stopped{background:var(--red-bg);color:#c0392b}.status-chip.free,.status-chip.active{background:var(--surface-3);color:var(--text-3)}
+  .status-dot-sm{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0}
+  .cost-cell{font-size:13px;font-weight:600}.cost-paid{color:var(--amber)}.cost-free{color:var(--text-3);font-weight:400}
+  .chevron{display:flex;align-items:center;justify-content:flex-end;color:var(--text-3);transition:color .15s,transform .15s}
+  .service-row:hover .chevron{color:var(--blue);transform:translateX(2px)}
+  .unknown-badge{display:inline-flex;align-items:center;font-size:10px;font-weight:700;background:#e8f1fb;color:var(--blue);border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:middle}
+  .state-center{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:64px 20px;gap:14px}
+  .spinner{width:28px;height:28px;border:2.5px solid var(--border-strong);border-top-color:var(--blue);border-radius:50%;animation:spin .75s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}.state-text{font-size:13px;color:var(--text-3)}
+  .scan-progress{background:var(--surface);border-radius:var(--radius-xl);box-shadow:var(--shadow);padding:40px;text-align:center}
+  .scan-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px}
+  .scan-sub{font-size:13px;color:var(--text-2);margin-bottom:28px}
+  .progress-track{height:4px;background:var(--surface-3);border-radius:2px;overflow:hidden;margin-bottom:20px}
+  .progress-bar{height:100%;background:var(--blue);border-radius:2px;transition:width .3s ease}
+  .scan-service-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:4px;max-height:220px;overflow-y:auto;text-align:left}
+  .scan-item{display:flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:var(--radius);padding:8px 12px;animation:rowIn .2s ease both}
+  .scan-item-icon{font-size:14px;flex-shrink:0}.scan-item-name{font-size:12px;font-weight:500;color:var(--text-2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .scan-item.found .scan-item-name{color:var(--text)}.scan-check{margin-left:auto;color:var(--green);font-size:12px;flex-shrink:0}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.22);backdrop-filter:blur(2px);z-index:100;opacity:0;pointer-events:none;transition:opacity .2s}
+  .overlay.open{opacity:1;pointer-events:all}
+  .panel{position:fixed;top:12px;right:12px;bottom:12px;width:min(500px,calc(100vw - 24px));background:var(--surface);border-radius:var(--radius-xl);box-shadow:var(--shadow-lg);z-index:101;overflow-y:auto;transform:translateX(calc(100% + 24px));transition:transform .28s cubic-bezier(.16,1,.3,1);padding:28px}
+  .panel.open{transform:translateX(0)}
+  .panel-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px}
+  .panel-icon-lg{width:52px;height:52px;border-radius:13px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:12px}
+  .panel-icon-lg img{width:38px;height:38px;object-fit:contain}
+  .panel-name{font-size:22px;font-weight:600;letter-spacing:-.5px;color:var(--text);margin-bottom:3px}
+  .panel-meta{font-size:13px;color:var(--text-2)}
+  .close-btn{width:30px;height:30px;border-radius:50%;background:var(--surface-3);border:none;color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:background .15s;flex-shrink:0}
+  .close-btn:hover{background:var(--border-strong);color:var(--text)}
+  .panel-section{margin-bottom:24px}
+  .panel-section-label{font-size:11px;font-weight:600;color:var(--text-3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .stat-item{background:var(--surface-2);border-radius:var(--radius);padding:14px}
+  .stat-label{font-size:11px;color:var(--text-3);font-weight:500;margin-bottom:5px}
+  .stat-value{font-size:15px;font-weight:600;color:var(--text)}
+  .resource-items{display:flex;flex-direction:column;gap:8px}
+  .res-item{background:var(--surface-2);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;transition:background .12s}
+  .res-item:hover{background:var(--surface-3)}
+  .res-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+  .res-id{font-size:11px;color:var(--text-3);font-family:'SF Mono','Fira Code',monospace;word-break:break-all}
+  .res-cost{font-size:13px;font-weight:600;color:var(--amber);text-align:right;margin-bottom:4px}
+  .res-cost.free{color:var(--text-3);font-weight:400}
+  .console-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--blue);background:var(--blue-light);border:none;border-radius:980px;padding:8px 16px;cursor:pointer;text-decoration:none;transition:background .15s;margin-top:8px}
+  .console-link:hover{background:rgba(0,113,227,.14)}
+  .page-footer{margin-top:40px;display:flex;align-items:center;justify-content:space-between}
+  .footer-left{font-size:12px;color:var(--text-3)}.footer-left a{color:var(--blue);text-decoration:none;font-weight:500}
+  .last-scan-text{font-size:12px;color:var(--text-3)}
+  @media(max-width:720px){.summary{grid-template-columns:repeat(2,1fr)}.list-header{display:none}.service-row{grid-template-columns:52px 1fr auto auto 36px}.cell{display:none}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <div class="brand">
+      <div class="brand-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></div>
+      <span class="brand-name">Cloud Resource Map</span>
+    </div>
+    <div class="nav-right">
+      <div class="connected-pill"><div class="connected-dot"></div>Connected</div>
+      <button class="nav-btn nav-btn-ghost" onclick="showConfig()">Configure</button>
+      <button class="nav-btn nav-btn-primary" onclick="startScan()">Scan now</button>
+    </div>
+  </div>
+</nav>
+<div class="provider-bar">
+  <div class="provider-tabs">
+    <button class="provider-tab tab-aws active" id="tab-aws" onclick="switchProvider('aws')">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg" alt="AWS" onerror="this.style.display='none'">
+      Amazon Web Services
+    </button>
+    <button class="provider-tab tab-azure" id="tab-azure" onclick="switchProvider('azure')">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Microsoft_Azure.svg" alt="Azure" onerror="this.style.display='none'">
+      Microsoft Azure
+    </button>
+    <button class="provider-tab tab-gcp" id="tab-gcp" onclick="switchProvider('gcp')">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/0/01/Google-cloud-platform.svg" alt="GCP" onerror="this.style.display='none'">
+      Google Cloud
+    </button>
+  </div>
+</div>
+<div class="page">
+  <div class="summary">
+    <div class="card card-blue"><div class="card-label">Total resources</div><div class="card-value" id="total-count">—</div><div class="card-sub">across all services</div></div>
+    <div class="card card-amber"><div class="card-label">Est. monthly cost</div><div class="card-value" id="total-cost">—</div><div class="card-sub">based on current usage</div></div>
+    <div class="card card-red"><div class="card-label">Paid services</div><div class="card-value" id="paid-count">—</div><div class="card-sub">actively billing</div></div>
+    <div class="card card-green"><div class="card-label">Free tier</div><div class="card-value" id="free-count">—</div><div class="card-sub">no current charge</div></div>
+  </div>
+  <div class="controls">
+    <div class="seg">
+      <button class="seg-btn active" onclick="setFilter('all',this)">All</button>
+      <button class="seg-btn" onclick="setFilter('paid',this)">Paid</button>
+      <button class="seg-btn" onclick="setFilter('free',this)">Free</button>
+      <button class="seg-btn" onclick="setFilter('running',this)">Running</button>
+      <button class="seg-btn" onclick="setFilter('stopped',this)">Stopped</button>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
+      <input class="search" type="text" placeholder="Search any service, resource ID, region…" oninput="filterRows(this.value)" id="search-input">
+    </div>
+    <select class="region-select" id="region-select" onchange="changeRegion(this.value)"></select>
+    <button class="export-btn" onclick="exportData()">Export JSON</button>
+  </div>
+  <div id="main-content">
+    <div class="scan-progress"><div class="scan-title">Ready to scan</div><div class="scan-sub">Click "Scan now" to discover all resources in your account</div></div>
+  </div>
+  <div class="page-footer">
+    <div class="footer-left"><a href="https://github.com/cloudlens-io/cloud-resource-map" target="_blank">cloudlens-io / cloud-resource-map</a> · Open source, MIT</div>
+    <div class="last-scan-text" id="last-scan">Last scan: —</div>
+  </div>
+</div>
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+<div class="panel" id="panel"><div id="panel-content"></div></div>
+<script>
+const REG={
+  ec2:{name:'EC2',cat:'Compute',e:'🖥',bg:'#fff4e0',about:'Virtual servers you pay for per hour. Windows costs more than Linux due to Microsoft licensing.'},
+  ecs:{name:'ECS',cat:'Compute',e:'📦',bg:'#fff4e0',about:'Elastic Container Service runs Docker containers without managing underlying servers.'},
+  eks:{name:'EKS',cat:'Compute',e:'☸',bg:'#eaf7fd',about:'Managed Kubernetes — you pay for the control plane ($0.10/hr) and the underlying EC2 nodes.'},
+  lambda:{name:'Lambda',cat:'Compute',e:'λ',bg:'#eaf7ee',about:'Serverless functions. Free tier: 1M requests and 400K GB-seconds per month permanently.'},
+  lightsail:{name:'Lightsail',cat:'Compute',e:'💡',bg:'#fff4e0',about:'Simple VPS with flat predictable pricing, good for small websites and dev environments.'},
+  batch:{name:'Batch',cat:'Compute',e:'⚙',bg:'#f5f5f7',about:'Fully managed batch computing at scale. You pay only for the underlying EC2 resources used.'},
+  elastic_beanstalk:{name:'Elastic Beanstalk',cat:'Compute',e:'🌱',bg:'#eaf7ee',about:'PaaS for web apps. The service is free — you pay for the EC2 and other resources it provisions.'},
+  app_runner:{name:'App Runner',cat:'Compute',e:'🚀',bg:'#eaf7fd',about:'Fully managed service for deploying containerised apps and APIs directly from source code.'},
+  outposts:{name:'Outposts',cat:'Compute',e:'🏗',bg:'#f5f5f7',about:'AWS hardware installed in your own data centre for hybrid cloud workloads.'},
+  s3:{name:'S3',cat:'Storage',e:'🪣',bg:'#eaf7ee',about:'Object storage for any data. Free tier: 5GB standard storage. Costs grow with data volume.'},
+  ebs:{name:'EBS',cat:'Storage',e:'💾',bg:'#fff4e0',about:'Block storage volumes for EC2. You pay per GB provisioned, whether or not it is used.'},
+  efs:{name:'EFS',cat:'Storage',e:'📂',bg:'#eaf7ee',about:'Elastic shared file storage that scales automatically. Charged per GB stored per month.'},
+  fsx:{name:'FSx',cat:'Storage',e:'🗂',bg:'#eaf7fd',about:'Managed Windows or Lustre file systems. Use when you need Windows-native file sharing.'},
+  backup:{name:'AWS Backup',cat:'Storage',e:'🔒',bg:'#fff0ef',about:'Centralised backup for AWS resources. Charged per GB backed up and per GB restored.'},
+  glacier:{name:'Glacier',cat:'Storage',e:'🧊',bg:'#eaf7fd',about:'Ultra-low-cost archival storage. Retrieval takes minutes to hours depending on tier chosen.'},
+  storage_gateway:{name:'Storage Gateway',cat:'Storage',e:'🔌',bg:'#f5f5f7',about:'Hybrid storage connecting your on-premises environment to AWS cloud storage services.'},
+  rds:{name:'RDS',cat:'Database',e:'🗄',bg:'#eaf7fd',about:'Managed relational databases — MySQL, PostgreSQL, SQL Server, Oracle, MariaDB. Charged per instance-hour.'},
+  aurora:{name:'Aurora',cat:'Database',e:'✨',bg:'#f5edfb',about:'AWS-built MySQL and PostgreSQL compatible DB — up to 5x faster. Serverless option available.'},
+  dynamodb:{name:'DynamoDB',cat:'Database',e:'⚡',bg:'#eaf7fd',about:'Serverless NoSQL database. Free tier: 25GB storage and 25 read/write capacity units permanently.'},
+  elasticache:{name:'ElastiCache',cat:'Database',e:'🚀',bg:'#eaf7ee',about:'Managed Redis or Memcached caching layer. Charged per node-hour — stop nodes to stop paying.'},
+  memorydb:{name:'MemoryDB',cat:'Database',e:'🧠',bg:'#f5edfb',about:'Redis-compatible durable in-memory database. Faster than ElastiCache because data persists.'},
+  neptune:{name:'Neptune',cat:'Database',e:'🔗',bg:'#eaf7fd',about:'Managed graph database for highly connected data. Supports Gremlin and SPARQL queries.'},
+  redshift:{name:'Redshift',cat:'Database',e:'📊',bg:'#e8f1fb',about:'Petabyte-scale data warehouse. Charged per node-hour; Serverless charges per compute unit.'},
+  documentdb:{name:'DocumentDB',cat:'Database',e:'📄',bg:'#eaf7ee',about:'MongoDB-compatible managed document database. Charged per instance-hour and storage used.'},
+  keyspaces:{name:'Keyspaces',cat:'Database',e:'🔑',bg:'#fff4e0',about:'Managed Apache Cassandra-compatible wide-column database. Serverless with per-request pricing.'},
+  timestream:{name:'Timestream',cat:'Database',e:'⏱',bg:'#eaf7fd',about:'Serverless time-series database for IoT and operational data. Charged per query and storage.'},
+  vpc:{name:'VPC',cat:'Networking',e:'🔗',bg:'#eaf7fd',about:'Your private network in AWS. NAT Gateways inside it charge per hour even with no traffic — a very common surprise bill.'},
+  cloudfront:{name:'CloudFront',cat:'Networking',e:'🌍',bg:'#eaf7ee',about:'CDN delivering content from edge locations globally. Free tier: 1TB transfer and 10M requests/month.'},
+  route53:{name:'Route 53',cat:'Networking',e:'🌐',bg:'#f5edfb',about:'DNS and domain registration. Hosted zone costs $0.50/month. Health checks are charged separately.'},
+  elb:{name:'Load Balancers',cat:'Networking',e:'⚖',bg:'#eaf7fd',about:'ALB, NLB, and GLB distribute traffic across targets. Charged per LCU-hour consumed.'},
+  api_gateway:{name:'API Gateway',cat:'Networking',e:'🚪',bg:'#eaf7fd',about:'Create and manage REST, HTTP, and WebSocket APIs. Free tier: 1M calls/month for 12 months.'},
+  direct_connect:{name:'Direct Connect',cat:'Networking',e:'🔌',bg:'#f5f5f7',about:'Dedicated network connection from your data centre to AWS. Charged per port-hour and transfer.'},
+  transit_gateway:{name:'Transit Gateway',cat:'Networking',e:'🔀',bg:'#eaf7fd',about:'Central hub connecting VPCs and on-premises networks. Charged per attachment and data processed.'},
+  global_accelerator:{name:'Global Accelerator',cat:'Networking',e:'🌎',bg:'#eaf7ee',about:'Improves performance using AWS global network. Charged per accelerator-hour and data transferred.'},
+  iam:{name:'IAM',cat:'Security',e:'🛡',bg:'#fff0ef',about:'Identity and Access Management — controls who can do what in your AWS account. Always free.'},
+  kms:{name:'KMS',cat:'Security',e:'🔑',bg:'#fff0ef',about:'Encryption key management. Customer managed keys cost $1/month each after the free tier.'},
+  secrets_manager:{name:'Secrets Manager',cat:'Security',e:'🤫',bg:'#fff0ef',about:'Stores and rotates API keys, passwords, and credentials securely. Charged per secret per month.'},
+  waf:{name:'WAF',cat:'Security',e:'🧱',bg:'#fff0ef',about:'Web Application Firewall blocks malicious traffic. Charged per WebACL, rule, and million requests.'},
+  shield:{name:'Shield',cat:'Security',e:'🛡',bg:'#fff0ef',about:'DDoS protection. Standard is free. Advanced is $3,000/month with unlimited DDoS cost protection.'},
+  guardduty:{name:'GuardDuty',cat:'Security',e:'👁',bg:'#fff0ef',about:'Threat detection monitoring your account for malicious activity using ML and threat intelligence.'},
+  inspector:{name:'Inspector',cat:'Security',e:'🔍',bg:'#fff0ef',about:'Automated vulnerability scanning for EC2 instances, Lambda functions, and container images.'},
+  security_hub:{name:'Security Hub',cat:'Security',e:'🏛',bg:'#fff0ef',about:'Centralised security findings aggregated from GuardDuty, Inspector, Macie, and third-party tools.'},
+  macie:{name:'Macie',cat:'Security',e:'🔎',bg:'#fff0ef',about:'Uses ML to discover and protect sensitive data in S3 — PII, credentials, financial data.'},
+  certificate_mgr:{name:'Certificate Manager',cat:'Security',e:'📜',bg:'#eaf7ee',about:'Free SSL/TLS certificates for use with AWS services. No charge for certificates on AWS resources.'},
+  cloudwatch:{name:'CloudWatch',cat:'Monitoring',e:'📊',bg:'#f5f5f7',about:'Logs, metrics, and alarms across all AWS services. Free tier: 5GB logs, 10 alarms, 3 dashboards.'},
+  cloudtrail:{name:'CloudTrail',cat:'Monitoring',e:'🗒',bg:'#f5f5f7',about:'Records every API call in your account for auditing. One free management event trail per region.'},
+  config:{name:'AWS Config',cat:'Monitoring',e:'⚙',bg:'#f5f5f7',about:'Tracks configuration changes across resources over time. Charged per configuration item recorded.'},
+  xray:{name:'X-Ray',cat:'Monitoring',e:'🔬',bg:'#eaf7fd',about:'Distributed tracing for debugging production apps. Free tier: 100K traces recorded per month.'},
+  sns:{name:'SNS',cat:'Messaging',e:'📣',bg:'#f5edfb',about:'Pub/sub messaging. Free tier: 1M publishes and 100K HTTP deliveries per month permanently.'},
+  sqs:{name:'SQS',cat:'Messaging',e:'📬',bg:'#f5edfb',about:'Message queuing for decoupling services. Free tier: 1M requests per month permanently.'},
+  eventbridge:{name:'EventBridge',cat:'Messaging',e:'🌉',bg:'#f5edfb',about:'Serverless event bus connecting AWS services and applications. Charged per custom event published.'},
+  kinesis:{name:'Kinesis',cat:'Messaging',e:'🌊',bg:'#eaf7fd',about:'Real-time data streaming at scale. Charged per shard-hour and per PUT payload unit.'},
+  mq:{name:'Amazon MQ',cat:'Messaging',e:'📨',bg:'#f5edfb',about:'Managed ActiveMQ and RabbitMQ message broker. Charged per broker instance-hour.'},
+  ses:{name:'SES',cat:'Messaging',e:'📧',bg:'#f5edfb',about:'Email sending service for transactional and marketing emails. Charged per 1000 emails sent.'},
+  sagemaker:{name:'SageMaker',cat:'AI & ML',e:'🤖',bg:'#f5edfb',about:'Full ML lifecycle — build, train, deploy. Costs vary significantly by instance type and hours used.'},
+  bedrock:{name:'Bedrock',cat:'AI & ML',e:'🧱',bg:'#f5edfb',about:'Access foundation models from AWS and third parties via API. Charged per input and output token.'},
+  rekognition:{name:'Rekognition',cat:'AI & ML',e:'👁',bg:'#f5edfb',about:'Image and video analysis using ML. Free tier: 5K images per month for the first 12 months.'},
+  textract:{name:'Textract',cat:'AI & ML',e:'📖',bg:'#f5edfb',about:'Extracts text and structured data from documents automatically. Charged per page processed.'},
+  comprehend:{name:'Comprehend',cat:'AI & ML',e:'💬',bg:'#f5edfb',about:'NLP service for finding insights, sentiment, and entities in text. Charged per unit processed.'},
+  codecommit:{name:'CodeCommit',cat:'Developer Tools',e:'📝',bg:'#f5f5f7',about:'Managed Git repositories hosted in AWS. Free for up to 5 active users per month.'},
+  codebuild:{name:'CodeBuild',cat:'Developer Tools',e:'🏗',bg:'#f5f5f7',about:'Managed build service that compiles source, runs tests, produces packages. Free tier: 100 build minutes/month.'},
+  codedeploy:{name:'CodeDeploy',cat:'Developer Tools',e:'🚢',bg:'#f5f5f7',about:'Automated deployments to EC2, Lambda, and on-premises. No charge for EC2 and Lambda deployments.'},
+  codepipeline:{name:'CodePipeline',cat:'Developer Tools',e:'🔄',bg:'#f5f5f7',about:'Continuous delivery pipeline automation. One free pipeline/month; additional pipelines $1/month.'},
+  ecr:{name:'ECR',cat:'Developer Tools',e:'🐳',bg:'#eaf7fd',about:'Docker container image registry. Free tier: 500MB private storage per month.'},
+  cloudformation:{name:'CloudFormation',cat:'Developer Tools',e:'📋',bg:'#f5f5f7',about:'Infrastructure as code — free. You only pay for the AWS resources CloudFormation provisions.'},
+  ssm:{name:'Systems Manager',cat:'Developer Tools',e:'🔧',bg:'#f5f5f7',about:'Operational hub for managing instances and automation at scale. Most standard features are free.'},
+  athena:{name:'Athena',cat:'Analytics',e:'🔍',bg:'#f5edfb',about:'SQL queries directly on S3 data. Charged per TB scanned at $5/TB — partition your data to reduce cost.'},
+  glue:{name:'Glue',cat:'Analytics',e:'🔗',bg:'#f5edfb',about:'Serverless ETL for data integration and transformation. Charged per DPU-hour for ETL jobs.'},
+  emr:{name:'EMR',cat:'Analytics',e:'📊',bg:'#f5edfb',about:'Managed Hadoop and Spark clusters for big data processing at scale.'},
+  quicksight:{name:'QuickSight',cat:'Analytics',e:'📈',bg:'#f5edfb',about:'Business intelligence and data visualisation. Charged per author and per reader per month.'},
+  az_vm:{name:'Virtual Machines',cat:'Compute',e:'💻',bg:'#e8f1fb',about:'On-demand scalable VMs. Billed per second based on size and OS. Stop them to stop paying immediately.'},
+  az_functions:{name:'Azure Functions',cat:'Compute',e:'⚡',bg:'#eaf7ee',about:'Serverless functions. Free tier: 1M executions and 400K GB-seconds per month permanently.'},
+  az_aks:{name:'AKS',cat:'Compute',e:'☸',bg:'#eaf7fd',about:'Managed Kubernetes. The control plane is free — you pay only for the underlying VM nodes.'},
+  az_container:{name:'Container Instances',cat:'Compute',e:'📦',bg:'#eaf7fd',about:'Run containers without managing servers. Charged per vCPU and memory per second consumed.'},
+  az_app_service:{name:'App Service',cat:'Compute',e:'🌐',bg:'#eaf7ee',about:'Host web apps and APIs as PaaS. Free and shared tiers available for dev and test workloads.'},
+  az_blob:{name:'Blob Storage',cat:'Storage',e:'📦',bg:'#eaf7fd',about:'Object storage for unstructured data. Charged per GB stored and per 10K operations.'},
+  az_files:{name:'Azure Files',cat:'Storage',e:'📂',bg:'#eaf7ee',about:'Fully managed cloud file shares accessible via SMB and NFS protocols from anywhere.'},
+  az_disk:{name:'Managed Disks',cat:'Storage',e:'💾',bg:'#fff4e0',about:'Block storage volumes for Azure VMs. Charged per disk size provisioned — not what you actually use.'},
+  az_sql:{name:'Azure SQL',cat:'Database',e:'🗄',bg:'#e8f1fb',about:'Fully managed SQL Server in the cloud. Handles backups, updates, and high availability automatically.'},
+  az_cosmos:{name:'Cosmos DB',cat:'Database',e:'🌍',bg:'#f5edfb',about:'Globally distributed NoSQL database. Free tier: 1000 RU/s and 25GB storage permanently.'},
+  az_redis:{name:'Azure Cache for Redis',cat:'Database',e:'⚡',bg:'#eaf7ee',about:'Managed Redis in-memory cache. Charged per hour based on cache tier and size selected.'},
+  az_vnet:{name:'Virtual Network',cat:'Networking',e:'🔗',bg:'#eaf7fd',about:'Private network for Azure resources. VNet itself is free — gateways and data transfer cost extra.'},
+  az_frontdoor:{name:'Front Door',cat:'Networking',e:'🚪',bg:'#eaf7fd',about:'Global load balancer and CDN with WAF. Charged per routing rule and data processed.'},
+  az_dns:{name:'Azure DNS',cat:'Networking',e:'🌐',bg:'#f5edfb',about:'Host DNS domains in Azure. Charged per zone per month and per million DNS queries handled.'},
+  az_keyvault:{name:'Key Vault',cat:'Security',e:'🔑',bg:'#fff0ef',about:'Manages secrets, keys, and certificates securely. Free tier: 10K operations per month.'},
+  az_defender:{name:'Defender for Cloud',cat:'Security',e:'🛡',bg:'#fff0ef',about:'Unified security management across Azure and hybrid workloads. Basic tier is free.'},
+  az_monitor:{name:'Azure Monitor',cat:'Monitoring',e:'📊',bg:'#f5f5f7',about:'Full observability across Azure and hybrid. First 5GB of log data ingested per month is free.'},
+  az_servicebus:{name:'Service Bus',cat:'Messaging',e:'🚌',bg:'#f5edfb',about:'Enterprise message broker. Basic tier starts at $0.05 per million operations.'},
+  az_eventhub:{name:'Event Hubs',cat:'Messaging',e:'🌊',bg:'#eaf7fd',about:'Big data streaming platform. Charged per throughput unit per hour and data ingressed.'},
+  az_adf:{name:'Data Factory',cat:'Analytics',e:'🔗',bg:'#f5edfb',about:'ETL and data integration service. Charged per pipeline activity run and data movement.'},
+  az_synapse:{name:'Synapse Analytics',cat:'Analytics',e:'📊',bg:'#f5edfb',about:'Unified analytics combining big data processing and data warehousing in one service.'},
+  az_openai:{name:'Azure OpenAI',cat:'AI & ML',e:'🤖',bg:'#f5edfb',about:'GPT, DALL-E, and Whisper models via API. Charged per 1K input and output tokens consumed.'},
+  gcp_gce:{name:'Compute Engine',cat:'Compute',e:'🖥',bg:'#eaf7fd',about:'VMs with per-second billing and automatic sustained use discounts applied at month end.'},
+  gcp_gke:{name:'Kubernetes Engine',cat:'Compute',e:'☸',bg:'#eaf7fd',about:'Managed Kubernetes. One zonal cluster control plane is free — you pay for the worker nodes.'},
+  gcp_functions:{name:'Cloud Functions',cat:'Compute',e:'⚡',bg:'#eaf7ee',about:'Serverless functions. Free tier: 2M invocations and 400K GB-seconds per month permanently.'},
+  gcp_run:{name:'Cloud Run',cat:'Compute',e:'🚀',bg:'#eaf7fd',about:'Run containers serverlessly. Free tier: 2M requests and 360K GB-seconds per month.'},
+  gcp_appengine:{name:'App Engine',cat:'Compute',e:'⚙',bg:'#f5f5f7',about:'PaaS for web apps. Standard environment has a generous free tier for small applications.'},
+  gcp_gcs:{name:'Cloud Storage',cat:'Storage',e:'🪣',bg:'#eaf7ee',about:'Object storage. Free tier: 5GB standard storage per month in US regions.'},
+  gcp_filestore:{name:'Filestore',cat:'Storage',e:'📂',bg:'#eaf7ee',about:'Managed NFS file storage for GKE and Compute Engine workloads. No free tier.'},
+  gcp_sql:{name:'Cloud SQL',cat:'Database',e:'🗄',bg:'#e8f1fb',about:'Managed MySQL, PostgreSQL, and SQL Server. Handles backups and replication automatically.'},
+  gcp_spanner:{name:'Cloud Spanner',cat:'Database',e:'🌍',bg:'#f5edfb',about:'Globally distributed SQL database with 99.999% SLA. Charged per node and storage used.'},
+  gcp_firestore:{name:'Firestore',cat:'Database',e:'🔥',bg:'#fff4e0',about:'Serverless NoSQL document database. Free tier: 1GB storage and 50K document reads per day.'},
+  gcp_bigtable:{name:'Bigtable',cat:'Database',e:'📋',bg:'#eaf7fd',about:'Scalable NoSQL wide-column database. Built for analytical and high-throughput operational workloads.'},
+  gcp_bigquery:{name:'BigQuery',cat:'Analytics',e:'📊',bg:'#f5edfb',about:'Serverless data warehouse. Free tier: 10GB storage and 1TB of query processing per month.'},
+  gcp_vpc:{name:'VPC Network',cat:'Networking',e:'🔗',bg:'#eaf7fd',about:'Global VPC with subnets in any region. Charged for egress traffic and NAT gateway usage.'},
+  gcp_lb:{name:'Cloud Load Balancing',cat:'Networking',e:'⚖',bg:'#eaf7fd',about:'Global and regional load balancers. Charged per forwarding rule and data processed.'},
+  gcp_dns:{name:'Cloud DNS',cat:'Networking',e:'🌐',bg:'#f5edfb',about:'Managed DNS service. Charged per zone per month and per million DNS queries handled.'},
+  gcp_iam:{name:'Cloud IAM',cat:'Security',e:'🛡',bg:'#fff0ef',about:'Identity and Access Management for all GCP resources and services. Always free.'},
+  gcp_kms:{name:'Cloud KMS',cat:'Security',e:'🔑',bg:'#fff0ef',about:'Cryptographic key management. Charged per active key version and per 10K cryptographic operations.'},
+  gcp_scc:{name:'Security Command Center',cat:'Security',e:'🏛',bg:'#fff0ef',about:'Centralised security and risk platform for GCP. Standard tier is free for all GCP customers.'},
+  gcp_monitoring:{name:'Cloud Monitoring',cat:'Monitoring',e:'📊',bg:'#f5f5f7',about:'Metrics, logs, and traces for all GCP services. First 150MB of logs ingested per month is free.'},
+  gcp_pubsub:{name:'Pub/Sub',cat:'Messaging',e:'📣',bg:'#f5edfb',about:'Global message bus for streaming and event-driven architectures. Free tier: 10GB per month.'},
+  gcp_dataflow:{name:'Dataflow',cat:'Analytics',e:'🌊',bg:'#eaf7fd',about:'Managed Apache Beam for unified stream and batch data processing at any scale.'},
+  gcp_vertex:{name:'Vertex AI',cat:'AI & ML',e:'🤖',bg:'#f5edfb',about:'Unified ML platform for building and deploying ML models. Charged per node-hour for training.'},
+};
+
+const CATEGORY_ORDER=['Compute','Storage','Database','Networking','Security','Monitoring','Messaging','Analytics','AI & ML','Developer Tools','Other'];
+
+const ICON_MAP={
+  ec2:'https://upload.wikimedia.org/wikipedia/commons/b/b9/AWS_Simple_Icons_Compute_Amazon_EC2_Instances.svg',
+  s3:'https://upload.wikimedia.org/wikipedia/commons/b/bc/Amazon-S3-Logo.svg',
+  lambda:'https://upload.wikimedia.org/wikipedia/commons/5/5c/Amazon_Lambda_architecture_logo.svg',
+  rds:'https://upload.wikimedia.org/wikipedia/commons/f/f8/Amazon-RDS-Logo.svg',
+  cloudwatch:'https://upload.wikimedia.org/wikipedia/commons/8/80/Amazon-CloudWatch-Logo.svg',
+  api_gateway:'https://upload.wikimedia.org/wikipedia/commons/1/1q/Amazon_API_Gateway_Logo.svg',
+  dynamodb:'https://upload.wikimedia.org/wikipedia/commons/f/fd/DynamoDB.png',
+  route53:'https://upload.wikimedia.org/wikipedia/commons/7/79/Amazon-Route-53-logo.png',
+  cloudfront:'https://upload.wikimedia.org/wikipedia/commons/a/a7/Amazon-CloudFront-Logo.svg',
+  sqs:'https://upload.wikimedia.org/wikipedia/commons/8/80/Amazon-SQS-Logo.svg',
+  sns:'https://upload.wikimedia.org/wikipedia/commons/e/e0/Amazon-SNS-Logo.svg',
+};
+const AZURE_ICON='https://upload.wikimedia.org/wikipedia/commons/f/fa/Microsoft_Azure.svg';
+const GCP_ICON='https://upload.wikimedia.org/wikipedia/commons/0/01/Google-cloud-platform.svg';
+
+function getIcon(k){
+  if(ICON_MAP[k]) return ICON_MAP[k];
+  if(k.startsWith('az_')) return AZURE_ICON;
+  if(k.startsWith('gcp_')) return GCP_ICON;
+  return '';
+}
+
+function resolve(k){
+  if(REG[k]) return REG[k];
+  const name=k.replace(/^(az_|gcp_)/,'').split(/[_-]/).map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+  return{name,cat:'Other',e:'☁',bg:'#f5f5f7',about:`This service (${k}) was discovered in your account. It is not yet in the registry — connect your backend to pull full details.`,isUnknown:true};
+}
+
+const PROVIDERS={
+  aws:{label:'Amazon Web Services',color:'#ff9900',provBg:'#fff4e0',consoleUrl:'https://console.aws.amazon.com',
+    regions:['us-east-1','us-east-2','us-west-1','us-west-2','eu-west-1','eu-west-2','eu-central-1','ap-southeast-1','ap-southeast-2','ap-northeast-1','All regions'],
+    data:[
+      {k:'ec2',count:3,region:'us-east-1',status:'running',cost:0.48,resources:[{name:'web-server-01',id:'i-0abc123def456',type:'t3.micro',state:'running',cost:0.20},{name:'api-server-01',id:'i-0def456ghi789',type:'t3.small',state:'running',cost:0.20},{name:'worker-01',id:'i-0ghi789jkl012',type:'t2.micro',state:'stopped',cost:0.08}]},
+      {k:'vpc',count:1,region:'us-east-1',status:'idle',cost:0.12,resources:[{name:'Default VPC',id:'vpc-0750a414a36d1a512',type:'VPC + NAT Gateway',state:'active',cost:0.12}]},
+      {k:'route53',count:1,region:'Global',status:'running',cost:0.01,resources:[{name:'Hosted zone',id:'Z092880417ER4K1FRV39',type:'Public hosted zone',state:'active',cost:0.01}]},
+      {k:'lambda',count:6,region:'us-east-1',status:'free',cost:0,resources:[{name:'A4L Secret VPC',id:'A4LSECRETVPC-IPv6-F7ZKtmmf0t8P',type:'Python 3.11',state:'idle',cost:0},{name:'EC2 Start',id:'EC2Start',type:'Python 3.11',state:'idle',cost:0},{name:'API Lambda',id:'api_lambda',type:'Python 3.11',state:'idle',cost:0},{name:'Email Reminder',id:'email_reminder_lambda',type:'Python 3.11',state:'idle',cost:0},{name:'Migrate to RDS',id:'MIGRATE2RDS-IPv6-x9mbwun4KfEQ',type:'Python 3.11',state:'idle',cost:0},{name:'EFS Demo',id:'EFSDEMO-VPC-RDS-IPv6',type:'Python 3.11',state:'idle',cost:0}]},
+      {k:'api_gateway',count:1,region:'us-east-1',status:'free',cost:0,resources:[{name:'REST API',id:'restapis/s5uvefaoe8',type:'REST — 3 deployments',state:'active',cost:0}]},
+      {k:'cloudwatch',count:9,region:'us-east-1',status:'free',cost:0,resources:[{name:'Lambda log groups',id:'/aws/lambda/*',type:'9 log groups',state:'active',cost:0}]},
+      {k:'s3',count:2,region:'us-east-1',status:'free',cost:0,resources:[{name:'Storage Lens default',id:'default-account-dashboard',type:'Storage Lens',state:'active',cost:0}]},
+      {k:'kms',count:1,region:'us-east-1',status:'free',cost:0,resources:[{name:'Customer key',id:'b52f202e-3b66-4db6-b829-63ca7f59be8c',type:'Symmetric ENCRYPT_DECRYPT',state:'active',cost:0}]},
+      {k:'iam',count:4,region:'Global',status:'free',cost:0,resources:[{name:'IAM-ADMIN',id:'iam:user/IAM-ADMIN',type:'IAM User',state:'active',cost:0},{name:'LambdaBookAPIRole',id:'iam:role/Lamda-BookAPI-ROLE',type:'IAM Role',state:'active',cost:0}]},
+      {k:'cloudtrail',count:1,region:'us-east-1',status:'free',cost:0,resources:[{name:'Management events trail',id:'trail/default',type:'Management events',state:'active',cost:0}]},
+      {k:'ecr',count:2,region:'us-east-1',status:'free',cost:0,resources:[{name:'flask-cicd-api',id:'ecr/flask-cicd-api',type:'Private repository',state:'active',cost:0},{name:'cloudlens-backend',id:'ecr/cloudlens-backend',type:'Private repository',state:'active',cost:0}]},
+      {k:'ses',count:2,region:'us-east-1',status:'free',cost:0,resources:[{name:'Kachi.Henry.Leo+A4L.in',id:'ses/Kachi.Henry.Leo+A4L.in@gmail.com',type:'Email identity',state:'active',cost:0},{name:'Kachi.Henry.Leo+A4L.out',id:'ses/Kachi.Henry.Leo+A4L.out@gmail.com',type:'Email identity',state:'active',cost:0}]},
+      {k:'ssm',count:1,region:'us-east-1',status:'running',cost:0,resources:[{name:'Active session',id:'IAM-ADMIN-bldyjizfdd8ugloj564ex46kn4',type:'SSM Session',state:'active',cost:0}]},
+      {k:'athena',count:1,region:'us-east-1',status:'free',cost:0,resources:[{name:'AwsDataCatalog',id:'athena:datacatalog/AwsDataCatalog',type:'Data catalog',state:'active',cost:0}]},
+      {k:'memorydb',count:1,region:'us-east-1',status:'free',cost:0,resources:[{name:'default user',id:'memorydb:user/default',type:'MemoryDB user',state:'active',cost:0}]},
+      {k:'eventbridge',count:1,region:'us-east-1',status:'free',cost:0,resources:[{name:'default event bus',id:'events:event-bus/default',type:'Event bus',state:'active',cost:0}]},
+      {k:'cloudformation',count:3,region:'us-east-1',status:'free',cost:0,resources:[{name:'A4L VPC Stack',id:'cfn/A4LVPC',type:'CloudFormation stack',state:'active',cost:0},{name:'Monolith Stack',id:'cfn/MONOLITHTOEC2DB',type:'CloudFormation stack',state:'active',cost:0}]},
+      {k:'guardduty',count:1,region:'us-east-1',status:'running',cost:0,resources:[{name:'GuardDuty detector',id:'guardduty/detector/default',type:'Threat detection',state:'active',cost:0}]},
+      {k:'unknown_custom_service',count:1,region:'us-east-1',status:'running',cost:0.05,resources:[{name:'custom-resource-01',id:'custom/resource-01',type:'Custom resource type',state:'running',cost:0.05}]},
+    ]
+  },
+  azure:{label:'Microsoft Azure',color:'#0078d4',provBg:'#e8f1fb',consoleUrl:'https://portal.azure.com',
+    regions:['East US','East US 2','West US','West US 2','West Europe','North Europe','Southeast Asia','All regions'],
+    data:[
+      {k:'az_vm',count:2,region:'East US',status:'running',cost:0.96,resources:[{name:'prod-api-vm',id:'/subscriptions/.../vm/prod-api-vm',type:'Standard_B2s',state:'running',cost:0.60},{name:'dev-worker-vm',id:'/subscriptions/.../vm/dev-worker-vm',type:'Standard_B1s',state:'running',cost:0.36}]},
+      {k:'az_blob',count:3,region:'East US',status:'running',cost:0.04,resources:[{name:'prod-assets',id:'storageaccount/prod-assets',type:'Hot tier',state:'active',cost:0.02},{name:'backups',id:'storageaccount/backups',type:'Cool tier',state:'active',cost:0.01},{name:'logs-archive',id:'storageaccount/logs-archive',type:'Archive',state:'active',cost:0.01}]},
+      {k:'az_functions',count:4,region:'East US',status:'free',cost:0,resources:[{name:'http-trigger-api',id:'func/http-trigger-api',type:'HTTP trigger',state:'idle',cost:0},{name:'timer-cleanup',id:'func/timer-cleanup',type:'Timer trigger',state:'idle',cost:0},{name:'queue-processor',id:'func/queue-processor',type:'Queue trigger',state:'idle',cost:0},{name:'blob-event-handler',id:'func/blob-event-handler',type:'Blob trigger',state:'idle',cost:0}]},
+      {k:'az_sql',count:1,region:'East US',status:'running',cost:1.50,resources:[{name:'prod-db',id:'server/prod-sql-server/db/prod-db',type:'General Purpose — 2 vCores',state:'running',cost:1.50}]},
+      {k:'az_vnet',count:1,region:'East US',status:'idle',cost:0,resources:[{name:'prod-vnet',id:'/subscriptions/.../vnet/prod-vnet',type:'3 subnets',state:'active',cost:0}]},
+      {k:'az_aks',count:1,region:'East US',status:'running',cost:0.10,resources:[{name:'prod-cluster',id:'/subscriptions/.../aks/prod-cluster',type:'3-node Standard_D2s_v3',state:'running',cost:0.10}]},
+      {k:'az_cosmos',count:1,region:'East US',status:'free',cost:0,resources:[{name:'app-cosmos-db',id:'/subscriptions/.../cosmos/app-cosmos-db',type:'NoSQL — 400 RU/s',state:'active',cost:0}]},
+      {k:'az_keyvault',count:1,region:'East US',status:'free',cost:0,resources:[{name:'prod-keyvault',id:'/subscriptions/.../vaults/prod-keyvault',type:'Standard tier',state:'active',cost:0}]},
+      {k:'az_monitor',count:1,region:'Global',status:'free',cost:0,resources:[{name:'prod-log-workspace',id:'/subscriptions/.../workspaces/prod-log-workspace',type:'Log Analytics workspace',state:'active',cost:0}]},
+      {k:'az_servicebus',count:1,region:'East US',status:'free',cost:0,resources:[{name:'prod-servicebus',id:'/subscriptions/.../servicebus/prod-servicebus',type:'Standard tier',state:'active',cost:0}]},
+      {k:'az_dns',count:2,region:'Global',status:'running',cost:0.02,resources:[{name:'leonardkachi.com',id:'dns/leonardkachi.com',type:'Public zone',state:'active',cost:0.01},{name:'internal.kachi.io',id:'dns/internal.kachi.io',type:'Private zone',state:'active',cost:0.01}]},
+      {k:'az_defender',count:1,region:'Global',status:'running',cost:0,resources:[{name:'Defender for Cloud',id:'microsoft.security/pricings',type:'Standard tier',state:'active',cost:0}]},
+      {k:'az_openai',count:1,region:'East US',status:'running',cost:0.08,resources:[{name:'gpt-4-deployment',id:'openai/deployments/gpt-4',type:'GPT-4 — 8K context',state:'running',cost:0.08}]},
+    ]
+  },
+  gcp:{label:'Google Cloud Platform',color:'#4285f4',provBg:'#eaf7fd',consoleUrl:'https://console.cloud.google.com',
+    regions:['us-central1','us-east1','us-west1','europe-west1','asia-east1','asia-southeast1','All regions'],
+    data:[
+      {k:'gcp_gce',count:2,region:'us-central1',status:'running',cost:0.72,resources:[{name:'api-instance-01',id:'projects/.../instances/api-instance-01',type:'e2-medium',state:'running',cost:0.50},{name:'worker-01',id:'projects/.../instances/worker-01',type:'e2-micro',state:'running',cost:0.22}]},
+      {k:'gcp_gcs',count:3,region:'us-central1',status:'running',cost:0.06,resources:[{name:'prod-assets-bucket',id:'gs://prod-assets-bucket',type:'Standard',state:'active',cost:0.03},{name:'backups-bucket',id:'gs://backups-bucket',type:'Nearline',state:'active',cost:0.02},{name:'logs-bucket',id:'gs://logs-bucket',type:'Coldline',state:'active',cost:0.01}]},
+      {k:'gcp_functions',count:3,region:'us-central1',status:'free',cost:0,resources:[{name:'process-upload',id:'projects/.../functions/process-upload',type:'HTTP — Node.js 20',state:'idle',cost:0},{name:'send-email',id:'projects/.../functions/send-email',type:'Pub/Sub trigger',state:'idle',cost:0},{name:'resize-image',id:'projects/.../functions/resize-image',type:'Storage trigger',state:'idle',cost:0}]},
+      {k:'gcp_gke',count:1,region:'us-central1',status:'running',cost:0.10,resources:[{name:'prod-cluster',id:'projects/.../clusters/prod-cluster',type:'3-node e2-small',state:'running',cost:0.10}]},
+      {k:'gcp_sql',count:1,region:'us-central1',status:'running',cost:0.84,resources:[{name:'prod-postgres',id:'projects/.../instances/prod-postgres',type:'PostgreSQL 15 — db-g1-small',state:'running',cost:0.84}]},
+      {k:'gcp_bigquery',count:2,region:'us-central1',status:'free',cost:0,resources:[{name:'analytics_dataset',id:'project:analytics_dataset',type:'Dataset — 3 tables',state:'active',cost:0},{name:'logs_dataset',id:'project:logs_dataset',type:'Dataset — 1 table',state:'active',cost:0}]},
+      {k:'gcp_run',count:2,region:'us-central1',status:'running',cost:0,resources:[{name:'api-service',id:'projects/.../services/api-service',type:'Cloud Run service',state:'running',cost:0},{name:'worker-service',id:'projects/.../services/worker-service',type:'Cloud Run service',state:'idle',cost:0}]},
+      {k:'gcp_pubsub',count:3,region:'Global',status:'free',cost:0,resources:[{name:'events-topic',id:'projects/.../topics/events-topic',type:'Topic',state:'active',cost:0},{name:'events-sub',id:'projects/.../subscriptions/events-sub',type:'Subscription',state:'active',cost:0}]},
+      {k:'gcp_iam',count:5,region:'Global',status:'free',cost:0,resources:[{name:'compute@developer',id:'iam/compute@developer.gserviceaccount.com',type:'Service account',state:'active',cost:0}]},
+      {k:'gcp_vpc',count:1,region:'Global',status:'idle',cost:0,resources:[{name:'default',id:'projects/.../networks/default',type:'Global VPC — 3 subnets',state:'active',cost:0}]},
+      {k:'gcp_kms',count:2,region:'Global',status:'free',cost:0,resources:[{name:'prod-keyring',id:'projects/.../keyRings/prod-keyring',type:'Key ring — 2 keys',state:'active',cost:0}]},
+      {k:'gcp_monitoring',count:1,region:'Global',status:'free',cost:0,resources:[{name:'Default workspace',id:'monitoring/workspace/default',type:'Monitoring workspace',state:'active',cost:0}]},
+      {k:'gcp_spanner',count:1,region:'us-central1',status:'running',cost:0.90,resources:[{name:'prod-spanner',id:'projects/.../instances/prod-spanner',type:'Regional — 1 processing unit',state:'running',cost:0.90}]},
+      {k:'gcp_vertex',count:1,region:'us-central1',status:'idle',cost:0,resources:[{name:'text-bison-endpoint',id:'projects/.../endpoints/text-bison',type:'Vertex AI endpoint',state:'idle',cost:0}]},
+    ]
+  }
+};
+
+let AP='aws',AF='all',AS='',CD=[];
+
+window.addEventListener('DOMContentLoaded',()=>{populateRegions('aws');startScan()});
+
+function populateRegions(p){
+  const s=document.getElementById('region-select');
+  s.innerHTML=PROVIDERS[p].regions.map(r=>`<option>${r}</option>`).join('');
+}
+
+const API_BASE = 'http://localhost:8000';
+
+function apiServiceToRow(svc) {
+  return {
+    k:         svc.id || svc.iconKey || 'unknown',
+    count:     svc.count     || 0,
+    region:    svc.region    || 'Global',
+    status:    svc.status    || 'idle',
+    cost:      svc.cost      || 0,
+    resources: (svc.resources || []).map(r => ({
+      name:  r.name  || r.id || 'Unknown',
+      id:    r.id    || '',
+      type:  r.type  || '',
+      state: r.state || 'unknown',
+      cost:  r.cost  || 0,
+    })),
+    _apiName:  svc.name,
+    _apiDesc:  svc.desc,
+    _apiAbout: svc.about,
+    _error:    svc.error || null,
+  };
+}
+
+async function startScan() {
+  const p   = PROVIDERS[AP];
+  const el  = document.getElementById('main-content');
+  el.style.background='';el.style.borderRadius='';el.style.boxShadow='';el.style.overflow='';
+
+  el.innerHTML=`<div class="scan-progress"><div class="scan-title">Scanning ${p.label}...</div><div class="scan-sub">Connecting to your cloud account and discovering resources</div><div class="progress-track"><div class="progress-bar" id="pbar" style="width:0%"></div></div><div class="scan-service-list" id="slist"></div></div>`;
+
+  let fake = 0;
+  const fakeTimer = setInterval(() => {
+    fake = Math.min(fake + (Math.random() * 8), 85);
+    const pb = document.getElementById('pbar');
+    if (pb) pb.style.width = fake + '%';
+  }, 200);
+
+  try {
+    const res  = await fetch(`${API_BASE}/resources/${AP}`);
+    clearInterval(fakeTimer);
+    if (!res.ok) throw new Error('API returned HTTP ' + res.status);
+    const json = await res.json();
+    const pb   = document.getElementById('pbar');
+    if (pb) pb.style.width = '100%';
+
+    if (json.connected === false) {
+      el.innerHTML = `<div class="state-center"><div style="font-size:40px;margin-bottom:14px">🔌</div><div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px">${p.label} not connected</div><div style="font-size:13px;color:var(--text-2);max-width:360px;text-align:center;line-height:1.7">${json.message}</div><div style="font-size:12px;color:var(--text-3);margin-top:14px">See <strong>README.md</strong> for setup instructions</div></div>`;
+      updateCards([]);
+      document.getElementById('last-scan').textContent = 'Not connected';
+      return;
+    }
+
+    const services = json.services || [];
+    const sl = document.getElementById('slist');
+    if (sl) {
+      services.forEach((svc, i) => {
+        setTimeout(() => {
+          const d = document.createElement('div');
+          d.className = 'scan-item found';
+          d.style.animationDelay = '0ms';
+          d.innerHTML = '<span class="scan-item-icon">' + resolve(svc.id||'unknown').e + '</span><span class="scan-item-name">' + svc.name + '</span><span class="scan-check">✓</span>';
+          sl.appendChild(d);
+          sl.scrollTop = sl.scrollHeight;
+        }, i * 80);
+      });
+    }
+
+    const rows = services.map(apiServiceToRow);
+    setTimeout(() => {
+      renderDashboard(rows);
+      document.getElementById('last-scan').textContent = 'Last scan: ' + new Date(json.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }, services.length * 80 + 400);
+
+  } catch (err) {
+    clearInterval(fakeTimer);
+    el.innerHTML = `<div class="state-center"><div style="font-size:40px;margin-bottom:14px">⚠</div><div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px">Could not reach the backend</div><div style="font-size:13px;color:var(--text-2);max-width:360px;text-align:center;line-height:1.7">Make sure the backend is running:<br><br><code style="background:var(--surface-3);padding:4px 10px;border-radius:6px;font-size:12px;display:inline-block">docker compose up</code></div><div style="font-size:12px;color:var(--text-3);margin-top:14px">' + err.message + '</div></div>`;
+    updateCards([]);
+  }
+}
+
+function renderDashboard(data){
+  CD=data;const el=document.getElementById('main-content');
+  updateCards(data);
+  el.innerHTML=`<div class="list-header" style="border-radius:var(--radius-xl) var(--radius-xl) 0 0;border:1px solid var(--border);border-bottom:none"><span></span><span>Service</span><span>Resources</span><span>Region</span><span>Status</span><span>Est. cost / mo</span><span></span></div><div id="rows-container"></div>`;
+  el.style.background='var(--surface)';el.style.borderRadius='var(--radius-xl)';el.style.boxShadow='var(--shadow)';el.style.overflow='hidden';
+  renderRows(data);
+  document.getElementById('last-scan').textContent='Last scan: '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+}
+
+function renderRows(data){
+  const container=document.getElementById('rows-container');if(!container)return;
+  const filtered=data.filter(d=>{
+    const s=resolve(d.k);
+    const fok=AF==='all'||(AF==='paid'&&d.cost>0)||(AF==='free'&&d.cost===0)||(AF==='running'&&d.status==='running')||(AF==='stopped'&&d.status==='stopped');
+    const sok=!AS||s.name.toLowerCase().includes(AS)||(s.cat||'').toLowerCase().includes(AS)||d.region.toLowerCase().includes(AS)||d.k.toLowerCase().includes(AS)||d.resources.some(r=>r.name.toLowerCase().includes(AS)||r.id.toLowerCase().includes(AS)||(r.type||'').toLowerCase().includes(AS));
+    return fok&&sok;
+  });
+  if(!filtered.length){container.innerHTML=`<div class="state-center"><div class="state-text">No services match your filters.</div></div>`;return;}
+  const groups={};
+  filtered.forEach(d=>{const s=resolve(d.k);const cat=s.cat||'Other';if(!groups[cat])groups[cat]=[];groups[cat].push({...d,_s:s});});
+  const cats=[...CATEGORY_ORDER.filter(c=>groups[c]),...Object.keys(groups).filter(c=>!CATEGORY_ORDER.includes(c))];
+  let ri=0;
+  container.innerHTML=cats.map(cat=>{
+    const items=groups[cat];
+    const catCost=items.reduce((s,i)=>s+i.cost,0);
+    const rows=items.map(d=>{
+      const delay=ri*25;ri++;
+      const iconSrc=getIcon(d.k);
+      return `<div class="service-row" onclick="openPanel('${d.k}')" style="animation-delay:${delay}ms">
+        <div class="svc-icon" style="background:${d._s.bg}">
+          ${iconSrc?`<img src="${iconSrc}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" style="width:26px;height:26px;object-fit:contain"><span style="display:none;font-size:17px;align-items:center;justify-content:center;width:100%;height:100%">${d._s.e}</span>`:`<span style="font-size:17px">${d._s.e}</span>`}
+        </div>
+        <div>
+          <div class="row-name">${d._s.name}${d._s.isUnknown?'<span class="unknown-badge">NEW</span>':''}</div>
+          <div class="row-desc">${d.resources.length>1?d.resources.length+' resources':d.resources[0]?.name||''} · ${d.k}</div>
+        </div>
+        <div class="cell"><span class="count-chip">${d.count}</span></div>
+        <div class="cell">${d.region}</div>
+        <div class="cell"><span class="status-chip ${d.status}"><span class="status-dot-sm"></span>${d.status}</span></div>
+        <div class="cost-cell ${d.cost>0?'cost-paid':'cost-free'}">${d.cost>0?'$'+d.cost.toFixed(2):'Free'}</div>
+        <div class="chevron"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>`;
+    }).join('');
+    return `<div><div class="category-header" onclick="toggleCat(this)"><span class="category-label">${cat}</span><span class="category-count">${items.length}</span><span class="category-cost ${catCost===0?'free-cat':''}">${catCost>0?'$'+catCost.toFixed(2)+'/mo':'Free'}</span><span class="category-toggle"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></span></div><div class="category-body" style="max-height:9999px">${rows}</div></div>`;
+  }).join('');
+}
+
+function toggleCat(h){const b=h.nextElementSibling;const t=h.querySelector('.category-toggle');const open=b.style.maxHeight!=='0px';b.style.maxHeight=open?'0px':'9999px';t.classList.toggle('collapsed',open);}
+
+function openPanel(k){
+  const raw=CD.find(d=>d.k===k);if(!raw)return;
+  const s=resolve(k);const p=PROVIDERS[AP];const iconSrc=getIcon(k);
+  document.getElementById('panel-content').innerHTML=`
+    <div class="panel-top">
+      <div>
+        <div class="panel-icon-lg" style="background:${s.bg}">
+          ${iconSrc?`<img src="${iconSrc}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" style="width:38px;height:38px;object-fit:contain"><span style="display:none;font-size:26px">${s.e}</span>`:`<span style="font-size:26px">${s.e}</span>`}
+        </div>
+        <div class="panel-name">${s.name}${s.isUnknown?'<span class="unknown-badge">NEW</span>':''}</div>
+        <div class="panel-meta">${raw.region} · ${k}</div>
+        <div style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;margin-top:6px;background:${p.provBg};color:${p.color}">${p.label}</div>
+      </div>
+      <button class="close-btn" onclick="closePanel()">×</button>
+    </div>
+    <div class="panel-section"><div class="panel-section-label">What is this?</div><p style="font-size:13px;color:var(--text-2);line-height:1.7">${(raw._apiAbout || s.about)}</p></div>
+    <div class="panel-section"><div class="panel-section-label">Overview</div>
+      <div class="stat-grid">
+        <div class="stat-item"><div class="stat-label">Resources</div><div class="stat-value">${raw.count}</div></div>
+        <div class="stat-item"><div class="stat-label">Est. cost / month</div><div class="stat-value" style="color:${raw.cost>0?'var(--amber)':'var(--text-3)'}">${raw.cost>0?'$'+raw.cost.toFixed(2):'Free tier'}</div></div>
+        <div class="stat-item"><div class="stat-label">Status</div><div class="stat-value"><span class="status-chip ${raw.status}" style="font-size:12px"><span class="status-dot-sm"></span>${raw.status}</span></div></div>
+        <div class="stat-item"><div class="stat-label">Region</div><div class="stat-value" style="font-size:13px">${raw.region}</div></div>
+        <div class="stat-item"><div class="stat-label">Category</div><div class="stat-value" style="font-size:13px">${s.cat||'Other'}</div></div>
+        <div class="stat-item"><div class="stat-label">Service key</div><div class="stat-value" style="font-size:11px;font-family:monospace">${k}</div></div>
+      </div>
+    </div>
+    <div class="panel-section"><div class="panel-section-label">Resources (${raw.resources.length})</div>
+      <div class="resource-items">
+        ${raw.resources.map(r=>`
+          <div class="res-item">
+            <div style="flex:1;min-width:0">
+              <div class="res-name">${r.name}</div>
+              <div class="res-id">${r.id}</div>
+              <div style="font-size:11px;color:var(--text-3);margin-top:2px">${r.type||''}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div class="res-cost ${r.cost===0?'free':''}">${r.cost>0?'$'+r.cost.toFixed(2)+'/mo':'Free'}</div>
+              <span class="status-chip ${r.state==='running'||r.state==='active'?'running':r.state==='stopped'?'stopped':'idle'}" style="font-size:11px;margin-top:4px;display:inline-flex"><span class="status-dot-sm"></span>${r.state}</span>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <a class="console-link" href="${p.consoleUrl}" target="_blank"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>Open in ${p.label} Console</a>`;
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('panel').classList.add('open');
+}
+
+function closePanel(){document.getElementById('overlay').classList.remove('open');document.getElementById('panel').classList.remove('open');}
+
+function switchProvider(p){
+  AP=p;AF='all';AS='';
+  document.getElementById('search-input').value='';
+  document.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.seg-btn').classList.add('active');
+  document.querySelectorAll('.provider-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+p).classList.add('active');
+  populateRegions(p);startScan();
+}
+
+function setFilter(f,btn){AF=f;document.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderRows(CD);}
+function filterRows(q){AS=q.toLowerCase();renderRows(CD);}
+function changeRegion(){renderRows(CD);}
+
+function updateCards(data){
+  const total=data.reduce((s,d)=>s+d.count,0),cost=data.reduce((s,d)=>s+d.cost,0),paid=data.filter(d=>d.cost>0).length,free=data.filter(d=>d.cost===0).length;
+  anim('total-count',total);anim('total-cost',cost,'$',2);anim('paid-count',paid);anim('free-count',free);
+}
+
+function anim(id,target,prefix='',dp=0){
+  const el=document.getElementById(id);const t0=performance.now(),dur=600;
+  (function f(now){const p=Math.min((now-t0)/dur,1),e=1-Math.pow(1-p,3);el.textContent=prefix+(target*e).toFixed(dp);if(p<1)requestAnimationFrame(f);})(t0);
+}
+
+function showConfig(){alert('Credentials — Phase 2\n\nAWS: IAM read-only role or access keys\nAzure: Service Principal\nGCP: Service Account JSON');}
+
+function exportData(){
+  const blob=new Blob([JSON.stringify({provider:AP,scannedAt:new Date().toISOString(),services:CD},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`cloud-resource-map-${AP}-${Date.now()}.json`;a.click();
+}
+</script>
+</body>
+</html>
