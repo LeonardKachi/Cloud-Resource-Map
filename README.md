@@ -67,7 +67,9 @@ Copy both values — you will need them in Step 3.
 ### Step 3 — Add your credentials
 
 Copy the example file:
-
+```bash
+cd ..
+```
 ```bash
 # On Mac/Linux:
 cp .env.example .env
