@@ -313,6 +313,47 @@ def collect_kms(session, region):
     }
 
 
+
+
+def collect_apprunner(session, region):
+    try:
+        ar = session.client("apprunner", region_name=region)
+        services = ar.list_services().get("ServiceSummaryList", [])
+    except Exception:
+        return None  # Service not available in this region
+
+    resources = []
+    cost = 0.0
+    for svc in services:
+        # App Runner: ~$0.064/vCPU/hour + $0.007/GB/hour for active instances
+        # Paused services cost nothing
+        state = svc.get("Status", "unknown").lower()
+        monthly = round(0.064 * 0.25 * 730, 2) if state == "running" else 0.0
+        cost += monthly
+        resources.append({
+            "name": svc.get("ServiceName", "unknown"),
+            "id":   svc.get("ServiceArn", ""),
+            "type": f"App Runner — {svc.get('ServiceUrl', '')}",
+            "state": state,
+            "cost": monthly,
+        })
+
+    if not resources:
+        return None
+
+    return {
+        "id": "app_runner",
+        "iconKey": "app_runner",
+        "name": "App Runner",
+        "desc": f"Container apps — {len(resources)} service{'s' if len(resources) != 1 else ''}",
+        "count": len(resources),
+        "region": region,
+        "status": "running" if any(r["state"] == "running" for r in resources) else "idle",
+        "cost": round(cost, 2),
+        "about": "App Runner deploys containerised apps and APIs directly from ECR or source. You used this for your flask-cicd-api project.",
+        "resources": resources,
+    }
+
 def collect_aws_resources():
     """
     Main entry point. Collects resources from all supported AWS services.
@@ -333,6 +374,11 @@ def collect_aws_resources():
     services.append(safe_collect("CloudWatch",  lambda: collect_cloudwatch(session, region)))
     services.append(safe_collect("API Gateway", lambda: collect_apigateway(session, region)))
     services.append(safe_collect("KMS",         lambda: collect_kms(session, region)))
+
+    # App Runner — collect only if it returns data (not all regions support it)
+    ar_result = collect_apprunner(session, region)
+    if ar_result:
+        services.append(ar_result)
 
     # Remove services with zero resources to keep the UI clean
     services = [s for s in services if s.get("count", 0) > 0 or s.get("error")]
