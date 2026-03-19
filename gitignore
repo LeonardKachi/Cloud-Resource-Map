@@ -1,0 +1,26 @@
+# Credentials — never commit these
+.env
+
+# Terraform state — contains sensitive outputs
+iam/.terraform/
+iam/.terraform.lock.hcl
+iam/terraform.tfstate
+iam/terraform.tfstate.backup
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Docker
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
