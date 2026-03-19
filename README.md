@@ -34,7 +34,7 @@ Open a terminal (on Windows: PowerShell or Command Prompt) and run:
 
 ```bash
 git clone https://github.com/Cloud-Resource-Map/Cloud-Resource-Map.git
-cd cloud-resource-map
+cd Cloud-Resource-Map
 ```
 
 ### Step 2 — Set up your AWS credentials
