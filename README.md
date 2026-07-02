@@ -188,10 +188,6 @@ If you created credentials manually (Option B), make sure the IAM user has at mi
 
 ---
 
-## Contributing
-
-Pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
 ## License
 
 MIT — see [LICENSE](LICENSE)
